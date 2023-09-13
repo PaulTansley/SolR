@@ -1,10 +1,7 @@
-
-
-
 #' @title Logger
 #' @description Extract, transform and graph Solinst water table data
 #' @param site Site Name
-#' @param wtd_path Path to .xle Solisnt water table data folder
+#' @param wtd_path Path to .xle Solinst water table data folder
 #' @param aws_path Path to automatic weather station folder
 #' @param references Path to .csv of water table depth metadata
 #' @return Plots and csv data saved to SolR folder within the water table data folder
@@ -13,13 +10,13 @@
 #' @import lubridate
 #' @import sf
 #' @import BrailleR
-#' @import crayon
-#' @import plyr
+#' @importFrom crayon blue
 #' @import dplyr
-#' @import magrittr
+#' @importFrom magrittr "%>%"
 #' @import readr
 #' @import tidyr
 #' @import ggplot2
+#' @export logger
 
 logger <- function(site, wtd_path, aws_path, references){
 
@@ -211,10 +208,6 @@ suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 
 
 }
 
-logger("Honeygar", "C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/Honeygar",
-       "C:/Users/Paul.Tansley/Documents/GHG/AWS",
-       "C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/References/Honeygar.csv"
-       )
 
 
 
