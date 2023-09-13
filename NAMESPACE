@@ -2,6 +2,7 @@
 
 export(logger)
 import(BrailleR)
+import(XML)
 import(dplyr)
 import(ecoflux)
 import(ggplot2)

@@ -16,24 +16,25 @@
 #' @import readr
 #' @import tidyr
 #' @import ggplot2
+#' @import XML
 #' @export logger
 
 logger <- function(site, wtd_path, aws_path, references){
 
-  require(ecoflux, quietly = T)
-  require(ggpubr, quietly = T)
-  require(lubridate, quietly = T)
-  require(sf, quietly = T)
+  suppressWarnings(require(ecoflux, quietly = T))
+  suppressWarnings(require(ggpubr, quietly = T))
+  suppressWarnings(require(lubridate, quietly = T))
+  suppressWarnings(require(sf, quietly = T))
   suppressPackageStartupMessages(
-  require(BrailleR, quietly = T))
-  require(crayon, quietly = T)
-  require(readr)
-  require(dplyr)
-  require(magrittr)
-  require(tidyr)
-  require(ggplot2)
+  suppressWarnings(require(BrailleR, quietly = T)))
+  suppressWarnings(require(crayon, quietly = T))
+  suppressWarnings(require(readr))
+  suppressWarnings(require(dplyr))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(tidyr))
+  suppressWarnings(require(ggplot2))
 
-  GoSighted()
+  suppressMessages(GoSighted())
 
   cat(blue("\n Extracting Water Table Data \n"))
 
@@ -154,7 +155,7 @@ wtf <- wtf %>%
 
 wtf$date <- ymd(wtf$date)
 
-cat(blue("\n Creating Graphs"))
+cat(blue("\n Creating Graphs \n"))
 plt_sv <- paste0(sv,"/Plots/")
 
 all_line <- ggplot(wtf)+
@@ -205,6 +206,8 @@ all_plots <- suppressWarnings(ggarrange(top_plots, t1_line, ncol = 1, nrow = 2,
 
 suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 , height = 4200,
        units = "px", dpi = 400))
+
+cat(blue(paste0("Analysis complete files saved to: ", wtd_path, "/SolR")))
 
 }
 

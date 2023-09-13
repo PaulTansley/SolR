@@ -11,4 +11,4 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
 Imports: BrailleR, crayon, ecoflux, ggpubr, lubridate, sf,
-         readr, dplyr, magrittr, tidyr, ggplot2
+         readr, dplyr, magrittr, tidyr, ggplot2, XML
