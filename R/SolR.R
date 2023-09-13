@@ -3,21 +3,23 @@
 
 #' @title Logger
 #' @description Extract, transform and graph Solinst water table data
-#' @param Site Site Name
+#' @param site Site Name
 #' @param wtd_path Path to .xle Solisnt water table data folder
 #' @param aws_path Path to automatic weather station folder
 #' @param references Path to .csv of water table depth metadata
 #' @return Plots and csv data saved to SolR folder within the water table data folder
 #' @import ecoflux
-#' @import package
 #' @import ggpubr
 #' @import lubridate
 #' @import sf
 #' @import BrailleR
 #' @import crayon
 #' @import plyr
-#' @import tidyverse
-
+#' @import dplyr
+#' @import magrittr
+#' @import readr
+#' @import tidyr
+#' @import ggplot2
 
 logger <- function(site, wtd_path, aws_path, references){
 
@@ -26,10 +28,14 @@ logger <- function(site, wtd_path, aws_path, references){
   require(lubridate, quietly = T)
   require(sf, quietly = T)
   suppressPackageStartupMessages(
-    require(BrailleR, quietly = T))
+  require(BrailleR, quietly = T))
   require(crayon, quietly = T)
   require(plyr, quietly = T)
-  require(tidyverse, quietly = T)
+  require(readr)
+  require(dplyr)
+  require(magrittr)
+  require(tidyr)
+  require(ggplot2)
 
   cat(blue("\n Extracting Water Table Data \n"))
 
@@ -74,6 +80,9 @@ for(i in awsls){
   names(b) <- nm
   aws <- bind_rows(aws, b)
 }
+
+
+
 
 aws$Kpa <- aws$Bar * 0.1
 
