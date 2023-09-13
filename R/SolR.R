@@ -28,12 +28,12 @@ logger <- function(site, wtd_path, aws_path, references){
   suppressPackageStartupMessages(
   suppressWarnings(require(BrailleR, quietly = T)))
   suppressWarnings(require(crayon, quietly = T))
-  suppressWarnings(require(readr))
-  suppressWarnings(require(dplyr))
-  suppressWarnings(require(magrittr))
-  suppressWarnings(require(tidyr))
-  suppressWarnings(require(ggplot2))
-
+  suppressWarnings(require(readr, quietly = T))
+  suppressWarnings(require(dplyr, quietly = T))
+  suppressWarnings(require(magrittr, quietly = T))
+  suppressWarnings(require(tidyr, quietly = T))
+  suppressWarnings(require(ggplot2, quietly = T))
+  suppressWarnings(require(XML, quietly = T))
   suppressMessages(GoSighted())
 
   cat(blue("\n Extracting Water Table Data \n"))
