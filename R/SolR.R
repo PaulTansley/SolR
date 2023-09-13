@@ -150,7 +150,7 @@ wtf <- left_join(wtf, ref, by = "sample") %>%
 
 
 wtf <- wtf %>%
-  separate(datetime, c("date", "time"), sep = " ")
+  separate(datetime, c("date", "time"), sep = " ", remove = F)
 
 wtf$date <- ymd(wtf$date)
 
@@ -209,6 +209,8 @@ suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 
 wtf <- wtf %>%
   select(datetime, level, rainfall,	sample,	Eastings,	Northings) %>%
   mutate(datetime = as.character(datetime))
+
+
 
 
 write_csv(wtf, paste0(csv_sv,"/", site, "_WTD.csv"))
