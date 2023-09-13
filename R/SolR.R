@@ -207,7 +207,7 @@ all_plots <- suppressWarnings(ggarrange(top_plots, t1_line, ncol = 1, nrow = 2,
 suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 , height = 4200,
        units = "px", dpi = 400))
 
-cat(blue(paste0("Analysis complete files saved to: ", wtd_path, "/SolR")))
+cat(red(paste0("\n Analysis complete files saved to: ", wtd_path, "/SolR")))
 
 }
 
