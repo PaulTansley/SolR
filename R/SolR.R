@@ -14,7 +14,7 @@
 #' @import lubridate
 #' @import sf
 #' @import BrailleR
-#' @import Crayon
+#' @import crayon
 #' @import plyr
 #' @import tidyverse
 
