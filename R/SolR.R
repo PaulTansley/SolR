@@ -21,19 +21,19 @@
 
 logger <- function(site, wtd_path, aws_path, references){
 
-  suppressWarnings(require(ecoflux, quietly = T))
-  suppressWarnings(require(ggpubr, quietly = T))
-  suppressWarnings(require(lubridate, quietly = T))
-  suppressWarnings(require(sf, quietly = T))
-  suppressPackageStartupMessages(
-  suppressWarnings(require(BrailleR, quietly = T)))
-  suppressWarnings(require(crayon, quietly = T))
-  suppressWarnings(require(readr, quietly = T))
-  suppressWarnings(require(dplyr, quietly = T))
-  suppressWarnings(require(magrittr, quietly = T))
-  suppressWarnings(require(tidyr, quietly = T))
-  suppressWarnings(require(ggplot2, quietly = T))
-  suppressWarnings(require(XML, quietly = T))
+  suppressPackageStartupMessages(suppressWarnings(require(ecoflux, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(ggpubr, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(lubridate, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(sf, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(BrailleR, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(crayon, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(readr, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(dplyr, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(magrittr, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(tidyr, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(ggplot2, quietly = T)))
+  suppressPackageStartupMessages(suppressWarnings(require(XML, quietly = T)))
+
   suppressMessages(GoSighted())
 
   cat(blue("\n Extracting Water Table Data \n"))
