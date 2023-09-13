@@ -1,11 +1,30 @@
 
+
+
+#' @title Logger
+#' @description Extract, transform and graph Solinst water table data
+#' @param Site Site Name
+#' @param wtd_path Path to .xle Solisnt water table data folder
+#' @param aws_path Path to automatic weather station folder
+#' @param references Path to .csv of water table depth metadata
+#' @return Plots and csv data saved to SolR folder within the water table data folder
+#' @import ecoflux
+#' @import package
+#' @import ggpubr
+#' @import lubridate
+#' @import sf
+#' @import BrailleR
+#' @import Crayon
+#' @import plyr
+#' @import tidyverse
+
+
 logger <- function(site, wtd_path, aws_path, references){
-  
+
   require(ecoflux, quietly = T)
   require(ggpubr, quietly = T)
   require(lubridate, quietly = T)
   require(sf, quietly = T)
-  require(XML, quietly = T)
   suppressPackageStartupMessages(
     require(BrailleR, quietly = T))
   require(crayon, quietly = T)
@@ -13,18 +32,18 @@ logger <- function(site, wtd_path, aws_path, references){
   require(tidyverse, quietly = T)
 
   cat(blue("\n Extracting Water Table Data \n"))
-  
+
   sv <- paste0(wtd_path, "/SolR")
-  
+
   if(!dir.exists(sv)){
     dir.create(sv)
   }
-  
+
   csv_sv <- paste0(wtd_path, "/SolR/Data")
   if(!dir.exists(csv_sv)){
     dir.create(csv_sv)
   }
-  
+
 #wtd_data----
 ls <- list.files(wtd_path,
                  pattern = "xle", full.names = T)
@@ -40,7 +59,7 @@ for(i in ls){
 #aws_data----
 
 cat(blue("\n Extracting AWS Data \n"))
-awsls <- list.files(aws_path, 
+awsls <- list.files(aws_path,
                     full.names = T, pattern = ".csv")
 
 aws <- data.frame()
@@ -62,13 +81,13 @@ aws$mh2o <- aws$Kpa * 0.101972
 
 #wt----
 cat(blue("Calculating Water Table Levels"))
-ref <- suppressMessages(read_csv(references)) %>% 
-  dplyr::rename(sample = `Dipwell ID`) %>% 
+ref <- suppressMessages(read_csv(references)) %>%
+  dplyr::rename(sample = `Dipwell ID`) %>%
   mutate(ref = Level - `Ground Level`)
-  
+
 names(wtd) <- c("site", "sample", "coordinates", "date", "time",
                 "level", "temp", "level_off")
-wtd <- wtd %>% 
+wtd <- wtd %>%
   unite("datetime", date:time, sep = " ", remove = F)
 
 wtd$date <- ymd(wtd$date)
@@ -76,7 +95,7 @@ wtd$time <- hms(wtd$time)
 
 wtd$datetime <- ymd_hms(wtd$datetime)
 
-aws <- aws %>% 
+aws <- aws %>%
   unite("datetime", Date:Time, sep = " ", remove = F)
 
 aws$datetime <- dmy_hms(aws$datetime)
@@ -84,37 +103,37 @@ aws$datetime <- dmy_hms(aws$datetime)
 #combine----
 wtf <- data.frame()
 for(i in unique(wtd$sample)){
-  
-  wt1 <- wtd %>% 
-    filter(datetime <= max(aws$datetime)) %>% 
+
+  wt1 <- wtd %>%
+    filter(datetime <= max(aws$datetime)) %>%
     filter(datetime >= min(aws$datetime))
-  
-  wt2 <- wt1 %>% 
-    group_by(datetime) %>% 
+
+  wt2 <- wt1 %>%
+    group_by(datetime) %>%
     summarise(level = mean(level))
-  
-  aws1 <- aws %>% 
-    filter(datetime >= min(wt1$datetime) & datetime <= max(wt1$datetime)) %>% 
+
+  aws1 <- aws %>%
+    filter(datetime >= min(wt1$datetime) & datetime <= max(wt1$datetime)) %>%
     arrange(datetime)
-  
+
   aws1$datetime <- round_date(aws1$datetime, "hour")
-  
-  aws2 <- aws1 %>% 
-    group_by(datetime) %>%  
+
+  aws2 <- aws1 %>%
+    group_by(datetime) %>%
     summarise(mh2o_mean = mean(mh2o),
-              rainfall = sum(Rain)) 
-  
+              rainfall = sum(Rain))
+
   wt2<- suppressMessages(left_join(wt2, aws2, by = "datetime"))
-  
+
   wt2$sample <- i
   wtf <- rbind(wtf, wt2)
 }
 
-wtf <- left_join(wtf, ref, by = "sample") %>% 
+wtf <- left_join(wtf, ref, by = "sample") %>%
   mutate(level.adj = level - mh2o_mean,
          ref = 1.92 - ref,
          level.adj1 = level.adj - ref,
-         level = level.adj1) %>% 
+         level = level.adj1) %>%
   select(-c(level.adj, ref, level.adj1, `Ground Level`, Level, mh2o_mean))
 
 
@@ -124,7 +143,7 @@ write_csv(wtf, paste0(csv_sv,"/", site, "_WTD.csv"))
 
 suppressWarnings(unloadNamespace("BrailleR"))
 
-wtf <- wtf %>% 
+wtf <- wtf %>%
   separate(datetime, c("date", "time"), sep = " ")
 
 wtf$date <- ymd(wtf$date)
@@ -168,14 +187,14 @@ t1_line <- ggplot(wtf)+
   ggtitle("C")+
   labs(caption = "C: Line plots for each sample point.")
 
-suppressWarnings(ggsave(paste0(plt_sv, "/Combined/Facated_Line_plots.png"), 
+suppressWarnings(ggsave(paste0(plt_sv, "/Combined/Facated_Line_plots.png"),
                         t1_line, width = 4800 , height = 3500,
        units = "px", dpi = 400))
 
 
 top_plots <- suppressWarnings(ggarrange(all_line, t1_box,  nrow = 1, ncol = 2))
 
-all_plots <- suppressWarnings(ggarrange(top_plots, t1_line, ncol = 1, nrow = 2, 
+all_plots <- suppressWarnings(ggarrange(top_plots, t1_line, ncol = 1, nrow = 2,
                                         heights = c(1,1.5)))
 
 suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 , height = 4200,
@@ -184,11 +203,4 @@ suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 
 }
 
 
-logger(site = "Shapwick",
-       wtd_path ="C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/Shapwick",
-       aws_path = "C:/Users/Paul.Tansley/Documents/GHG/AWS",
-       references = "C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/References/Shapwick.csv")
 
-wtd_path ="C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/Shapwick"
-aws_path = "C:/Users/Paul.Tansley/Documents/GHG/AWS"
-references = "C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/References/Shapwick.csv"
