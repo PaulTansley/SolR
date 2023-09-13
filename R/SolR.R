@@ -145,7 +145,6 @@ wtf <- left_join(wtf, ref, by = "sample") %>%
   select(-c(level.adj, ref, level.adj1, `Ground Level`, Level, mh2o_mean))
 
 
-write_csv(wtf, paste0(csv_sv,"/", site, "_WTD.csv"))
 
 #graph----
 
@@ -206,6 +205,13 @@ all_plots <- suppressWarnings(ggarrange(top_plots, t1_line, ncol = 1, nrow = 2,
 
 suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 , height = 4200,
        units = "px", dpi = 400))
+
+wtf <- wtf %>%
+  select(datetime, level, rainfall,	sample,	Eastings,	Northings) %>%
+  mutate(datetime = as.character(datetime))
+
+
+write_csv(wtf, paste0(csv_sv,"/", site, "_WTD.csv"))
 
 cat(red(paste0("\n Analysis complete files saved to: ", wtd_path, "/SolR")))
 
