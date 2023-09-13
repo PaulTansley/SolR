@@ -9,7 +9,7 @@ logger(site, wtd_path, aws_path, references)
 \arguments{
 \item{site}{Site Name}
 
-\item{wtd_path}{Path to .xle Solisnt water table data folder}
+\item{wtd_path}{Path to .xle Solinst water table data folder}
 
 \item{aws_path}{Path to automatic weather station folder}
 

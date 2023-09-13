@@ -30,12 +30,13 @@ logger <- function(site, wtd_path, aws_path, references){
   suppressPackageStartupMessages(
   require(BrailleR, quietly = T))
   require(crayon, quietly = T)
-  require(plyr, quietly = T)
   require(readr)
   require(dplyr)
   require(magrittr)
   require(tidyr)
   require(ggplot2)
+
+  GoSighted()
 
   cat(blue("\n Extracting Water Table Data \n"))
 
@@ -57,7 +58,7 @@ ls <- list.files(wtd_path,
 
 wtd <- data.frame()
 for(i in ls){
-  FindReplace(i, 'ISO_8859_1', 'ISO-8859-1')
+  BrailleR::FindReplace(i, 'ISO_8859_1', 'ISO-8859-1')
   a <- read_xle(i)
   wtd <- rbind(wtd, a)
 }
@@ -150,7 +151,6 @@ write_csv(wtf, paste0(csv_sv,"/", site, "_WTD.csv"))
 
 #graph----
 
-suppressWarnings(unloadNamespace("BrailleR"))
 
 wtf <- wtf %>%
   separate(datetime, c("date", "time"), sep = " ")
@@ -210,6 +210,11 @@ suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 
        units = "px", dpi = 400))
 
 }
+
+logger("Honeygar", "C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/Honeygar",
+       "C:/Users/Paul.Tansley/Documents/GHG/AWS",
+       "C:/Users/Paul.Tansley/Documents/GHG/WTD/Logger/References/Honeygar.csv"
+       )
 
 
 
