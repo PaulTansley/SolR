@@ -19,7 +19,9 @@
 #' @import XML
 #' @export logger
 
-logger <- function(site, wtd_path, aws_path, references){
+logger <- function(site, suspension, wtd_path,
+                   aws_path, references,
+                   ext = ".xle", skp = 0){
 
   suppressPackageStartupMessages(suppressWarnings(require(ecoflux, quietly = T)))
   suppressPackageStartupMessages(suppressWarnings(require(ggpubr, quietly = T)))
@@ -50,16 +52,49 @@ logger <- function(site, wtd_path, aws_path, references){
   }
 
 #wtd_data----
+
 ls <- list.files(wtd_path,
-                 pattern = "xle", full.names = T)
+                 pattern = ext, full.names = T)
 
-
+if(ext == ".xle"){
 wtd <- data.frame()
 for(i in ls){
   BrailleR::FindReplace(i, 'ISO_8859_1', 'ISO-8859-1')
   a <- read_xle(i)
   wtd <- rbind(wtd, a)
+}}else{
+  wtd <- data.frame()
+for(i in ls){
+  a <- read.csv(i)
+  prj <- as.character(a[3,1])
+  smp <- as.character(a[5,1])
+  smp <- gsub("WHM ", "", smp)
+  b <- read.csv(i, skip = skp)
+  b$ProjectID <- prj
+  b$site <- smp
+  wtd <- rbind(wtd, b)
+  }
 }
+
+
+if(ext == ".xle"){
+  names(wtd) <- c("site", "sample", "coordinates", "date", "time",
+                  "level", "temp", "level_off")}else{
+                    names(wtd) <- c("date", "time", "ms",
+                                    "level", "temp", "site", "sample")}
+
+
+wtd <- wtd %>%
+  unite("datetime", date:time, sep = " ", remove = F)
+
+if(ext == ".xle"){
+  wtd$date <- ymd(wtd$date)
+  wtd$time <- hms(wtd$time)
+  wtd$datetime <- ymd_hms(wtd$datetime)}else{
+    wtd$date <- dmy(wtd$date)
+    wtd$time <- hms(wtd$time)
+    wtd$datetime <- dmy_hms(wtd$datetime)
+  }
 
 #aws_data----
 
@@ -75,13 +110,10 @@ for(i in awsls){
   nm2 <- as.character(b[1,])
   nm <- paste(nm1, nm2)
   nm <- gsub(" ", "", nm)
-  b <- suppressMessages(read_csv(i, skip = 2, col_names = F))
+  b <- suppressWarnings(suppressMessages(read_csv(i, skip = 2, col_names = F)))
   names(b) <- nm
-  aws <- bind_rows(aws, b)
+  aws <- rbind(aws, b)
 }
-
-
-
 
 aws$Kpa <- aws$Bar * 0.1
 
@@ -89,30 +121,33 @@ aws$mh2o <- aws$Kpa * 0.101972
 
 #wt----
 cat(blue("Calculating Water Table Levels"))
+
 ref <- suppressMessages(read_csv(references)) %>%
+  mutate(Level = as.numeric(Level)) %>%
+  drop_na(Level) %>%
   dplyr::rename(sample = `Dipwell ID`) %>%
-  mutate(ref = Level - `Ground Level`)
+  mutate(extension = Level - `Ground Level`)
 
-names(wtd) <- c("site", "sample", "coordinates", "date", "time",
-                "level", "temp", "level_off")
-wtd <- wtd %>%
-  unite("datetime", date:time, sep = " ", remove = F)
-
-wtd$date <- ymd(wtd$date)
-wtd$time <- hms(wtd$time)
-
-wtd$datetime <- ymd_hms(wtd$datetime)
 
 aws <- aws %>%
   unite("datetime", Date:Time, sep = " ", remove = F)
 
 aws$datetime <- dmy_hms(aws$datetime)
 
+wte <- wtd %>%
+  group_by(sample) %>%
+  slice(1)
+
+
 #combine----
 wtf <- data.frame()
 for(i in unique(wtd$sample)){
 
+
+  wtd$datetime <- round_date(wtd$datetime, "hour")
+
   wt1 <- wtd %>%
+    filter(sample == i) %>%
     filter(datetime <= max(aws$datetime)) %>%
     filter(datetime >= min(aws$datetime))
 
@@ -128,7 +163,7 @@ for(i in unique(wtd$sample)){
 
   aws2 <- aws1 %>%
     group_by(datetime) %>%
-    summarise(mh2o_mean = mean(mh2o),
+    summarise(mh2o_atmos = mean(mh2o),
               rainfall = sum(Rain))
 
   wt2<- suppressMessages(left_join(wt2, aws2, by = "datetime"))
@@ -137,20 +172,28 @@ for(i in unique(wtd$sample)){
   wtf <- rbind(wtf, wt2)
 }
 
+wte <- wtf %>%
+  group_by(sample) %>%
+  slice(1)
+
 wtf <- left_join(wtf, ref, by = "sample") %>%
-  mutate(level.adj = level - mh2o_mean,
-         ref = 1.92 - ref,
-         level.adj1 = level.adj - ref,
-         level = level.adj1) %>%
-  select(-c(level.adj, ref, level.adj1, `Ground Level`, Level, mh2o_mean))
+  mutate(wch = level - mh2o_atmos,
+         esgl = suspension - extension,
+         level = (esgl - wch) * -1) %>%
+  separate(datetime, c("date", "time"), sep = " ", remove = F) %>%
+  select("datetime", "sample", "rainfall", "level", "Eastings", "Northings")
 
-
+wte <- wtf %>%
+  group_by(sample) %>%
+  slice(1)
 
 #graph----
 
 
 wtf <- wtf %>%
-  separate(datetime, c("date", "time"), sep = " ", remove = F)
+  separate(datetime, c("date", "time"), sep = " ", remove = F) %>%
+  drop_na(level) %>%
+  filter(!level > 10)
 
 wtf$date <- ymd(wtf$date)
 
@@ -165,10 +208,11 @@ all_line <- ggplot(wtf)+
   rotate_x_text(45)+
   ggtitle("A")+
   labs(caption = "A: Combined line plot of all dipwells.")
+all_line
 
 suppressMessages(ggsave(paste0(plt_sv, "/Combined/Combined_line_plot.png"), all_line, width = 4800 , height = 1500,
        units = "px", dpi = 200))
-
+max(wtf$level)
 t1_box <- ggplot(wtf)+
   geom_boxplot(aes(sample, level))+
   xlab(NULL)+
@@ -176,7 +220,7 @@ t1_box <- ggplot(wtf)+
   rotate_x_text(45)+
   ggtitle("B")+
   labs(caption = "B: Boxplots for each sample point.")
-
+t1_box
 suppressWarnings(ggsave(paste0(plt_sv, "/Combined/Box_plots.png"), t1_box, width = 4800 , height = 1500,
        units = "px", dpi = 200))
 
@@ -207,11 +251,12 @@ suppressMessages(ggsave(paste0(plt_sv, "Overview.png"), all_plots, width = 5400 
        units = "px", dpi = 400))
 
 wtf <- wtf %>%
-  select(datetime, level, rainfall,	sample,	Eastings,	Northings) %>%
-  mutate(datetime = as.character(datetime))
+  select(datetime,date, level, rainfall,	sample,	Eastings,	Northings) %>%
+  mutate(datetime = as.character(datetime)) %>%
+  relocate(sample)
 
 
-
+assign("wtd", wtf, .GlobalEnv)
 
 write_csv(wtf, paste0(csv_sv,"/", site, "_WTD.csv"))
 
